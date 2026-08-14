@@ -8,6 +8,67 @@ const app = express();
 const port = process.env.PORT || 3000;
 const responsesFilePath = path.join(__dirname, 'responses.json');
 
+function buildTransportOptions(overrides = {}) {
+  const smtpPort = Number(process.env.SMTP_PORT || 587);
+  const smtpSecure =
+    process.env.SMTP_SECURE === 'true' ||
+    (process.env.SMTP_SECURE !== 'false' && smtpPort === 465);
+
+  return {
+    host: process.env.SMTP_HOST,
+    port: smtpPort,
+    secure: smtpSecure,
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    ...overrides,
+  };
+}
+
+async function sendDateMail(payload) {
+  const primaryTransport = nodemailer.createTransport(buildTransportOptions());
+
+  const mail = {
+    from: process.env.SMTP_USER,
+    to: process.env.TO_EMAIL,
+    subject: `New date response from ${payload.name}`,
+    html: `
+      <h2>New date response</h2>
+      <p><strong>Name:</strong> ${payload.name}</p>
+      <p><strong>Answer:</strong> ${payload.answer}</p>
+      <p><strong>Date:</strong> ${payload.date}</p>
+      <p><strong>Time:</strong> ${payload.time}</p>
+      <p><strong>Dream vibe:</strong> ${payload.vibe}</p>
+    `,
+  };
+
+  try {
+    await primaryTransport.sendMail(mail);
+    return;
+  } catch (error) {
+    const shouldRetryWith465 =
+      (error.code === 'ETIMEDOUT' || error.command === 'CONN') &&
+      Number(process.env.SMTP_PORT || 587) !== 465;
+
+    if (!shouldRetryWith465) {
+      throw error;
+    }
+
+    const fallbackTransport = nodemailer.createTransport(
+      buildTransportOptions({
+        port: 465,
+        secure: true,
+      })
+    );
+
+    await fallbackTransport.sendMail(mail);
+  }
+}
+
 function ensureResponseStore() {
   if (!fs.existsSync(responsesFilePath)) {
     fs.writeFileSync(responsesFilePath, '[]', 'utf8');
@@ -69,32 +130,7 @@ app.post('/api/submit-date', async (req, res) => {
 
     if (hasSmtpConfig) {
       try {
-        const transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
-          port: Number(process.env.SMTP_PORT || 587),
-          secure: false,
-          connectionTimeout: 10000,
-          greetingTimeout: 10000,
-          socketTimeout: 15000,
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-          },
-        });
-
-        await transporter.sendMail({
-          from: process.env.SMTP_USER,
-          to: process.env.TO_EMAIL,
-          subject: `New date response from ${name}`,
-          html: `
-            <h2>New date response</h2>
-            <p><strong>Name:</strong> ${payload.name}</p>
-            <p><strong>Answer:</strong> ${payload.answer}</p>
-            <p><strong>Date:</strong> ${payload.date}</p>
-            <p><strong>Time:</strong> ${payload.time}</p>
-            <p><strong>Dream vibe:</strong> ${payload.vibe}</p>
-          `,
-        });
+        await sendDateMail(payload);
 
         saveResponseLocally({ ...payload, emailSent: true });
 
