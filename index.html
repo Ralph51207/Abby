@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ABBY, Date Mission</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-orb orb-3"></div>
+
+    <main class="app-shell">
+      <div class="top-banner" aria-label="message">My love for you is timeless</div>
+
+      <section class="question-card" id="questionCard">
+        <p class="tag">✨ Date mission</p>
+        <h1>ABBY, will you go on a date with me?</h1>
+        <p class="subtitle">
+          I planned a little date night full of laughter, good food, and your favorite kind of magic.
+        </p>
+
+        <div class="mini-stats">
+          <span>💖 100% adorable</span>
+          <span>🎀 Only the best vibes</span>
+        </div>
+
+        <div class="action-panel" id="actionPanel">
+          <button id="yesBtn" class="btn btn-primary">Yes 😍</button>
+          <button id="noBtn" class="btn btn-secondary" type="button">No 😅</button>
+        </div>
+      </section>
+
+      <section class="date-card hidden" id="dateCard" aria-live="polite">
+        <h2>Perfect! Let’s make it official.</h2>
+        <p class="subtitle small">Pick a date and time that feels like us.</p>
+
+        <div class="planner-section">
+          <div class="section-label">Date &amp; time</div>
+          <div class="input-grid">
+            <label>
+              <span>Date</span>
+              <input id="dateInput" type="date" />
+            </label>
+            <label>
+              <span>Time</span>
+              <input id="timeInput" type="time" />
+            </label>
+          </div>
+        </div>
+
+        <div class="planner-section vibe-section">
+          <label class="dream-note">
+            <span>Dream vibe</span>
+            <textarea id="noteInput" rows="3" placeholder="Coffee, sunset, movie night, or a surprise adventure..."></textarea>
+          </label>
+        </div>
+
+        <button id="confirmBtn" class="btn btn-primary full-width">Lock in our plan 💖</button>
+      </section>
+
+      <section class="success-card hidden" id="successCard" aria-live="polite">
+        <div class="success-badge">It’s a date! 🥰</div>
+        <h2>We’re officially on for:</h2>
+        <div class="summary-box">
+          <p><strong>Date:</strong> <span id="selectedDate">Your chosen day</span></p>
+          <p><strong>Time:</strong> <span id="selectedTime">Your chosen time</span></p>
+          <p><strong>Vibe:</strong> <span id="selectedNote">A perfect little adventure</span></p>
+        </div>
+        <p class="final-message">I can’t wait to spend time with you and make this moment unforgettable.</p>
+      </section>
+    </main>
+
+    <div id="toast" class="toast hidden" aria-live="polite"></div>
+
+    <div class="confetti-layer" aria-hidden="true"></div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
