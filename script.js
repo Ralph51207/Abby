@@ -93,6 +93,13 @@ async function submitDateResponse(payload) {
 
     if (!result.success) {
       showToast('There was a tiny issue sending your response.');
+      return;
+    }
+
+    if (result.emailSent) {
+      showToast('Sent to email successfully.');
+    } else {
+      showToast(result.message || 'Saved locally only - email is not configured.');
     }
   } catch (_error) {
     showToast('Saved locally for now - the app is waiting for a live server.');
