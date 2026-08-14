@@ -74,7 +74,32 @@ yesBtn.addEventListener('click', () => {
   launchConfetti();
 });
 
-async function submitDateResponse() {
+async function submitDateResponse(payload) {
+  try {
+    const response = await fetch('/api/submit-date', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    let result;
+    try {
+      result = await response.json();
+    } catch (_error) {
+      result = { success: response.ok };
+    }
+
+    if (!result.success) {
+      showToast('There was a tiny issue sending your response.');
+    }
+  } catch (_error) {
+    showToast('Saved locally for now - the app is waiting for a live server.');
+  }
+}
+
+function confirmDatePlan() {
   const chosenDate = dateInput.value || 'Surprise me';
   const chosenTime = timeInput.value || 'Any time that feels right';
   const chosenNote = noteInput.value.trim() || 'A dreamy little adventure';
@@ -83,33 +108,19 @@ async function submitDateResponse() {
   selectedTime.textContent = chosenTime;
   selectedNote.textContent = chosenNote;
 
-  try {
-    const response = await fetch('/api/submit-date', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        name: 'ABBY',
-        answer: 'Yes',
-        date: chosenDate,
-        time: chosenTime,
-        vibe: chosenNote,
-      }),
-    });
-
-    const result = await response.json();
-
-    if (!result.success) {
-      showToast('There was a tiny issue sending your response.');
-    }
-  } catch (error) {
-    showToast('Saved locally for now — the app is waiting for a live server.');
-  }
-
   dateCard.classList.add('hidden');
   successCard.classList.remove('hidden');
   launchConfetti();
+
+  const payload = {
+    name: 'ABBY',
+    answer: 'Yes',
+    date: chosenDate,
+    time: chosenTime,
+    vibe: chosenNote,
+  };
+
+  submitDateResponse(payload);
 }
 
 function showToast(message) {
@@ -123,7 +134,7 @@ function showToast(message) {
 }
 
 confirmBtn.addEventListener('click', () => {
-  submitDateResponse();
+  confirmDatePlan();
 });
 
 function launchConfetti() {
