@@ -8,6 +8,50 @@ const app = express();
 const port = process.env.PORT || 3000;
 const responsesFilePath = path.join(__dirname, 'responses.json');
 
+function buildMailHtml(payload) {
+  return `
+    <h2>New date response</h2>
+    <p><strong>Name:</strong> ${payload.name}</p>
+    <p><strong>Answer:</strong> ${payload.answer}</p>
+    <p><strong>Date:</strong> ${payload.date}</p>
+    <p><strong>Time:</strong> ${payload.time}</p>
+    <p><strong>Dream vibe:</strong> ${payload.vibe}</p>
+  `;
+}
+
+function hasResendConfig() {
+  return process.env.RESEND_API_KEY && process.env.FROM_EMAIL && process.env.TO_EMAIL;
+}
+
+async function sendDateMailViaResend(payload) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: process.env.FROM_EMAIL,
+        to: [process.env.TO_EMAIL],
+        subject: `New date response from ${payload.name}`,
+        html: buildMailHtml(payload),
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Resend API failed: ${response.status} ${errorText}`);
+    }
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function buildTransportOptions(overrides = {}) {
   const smtpPort = Number(process.env.SMTP_PORT || 587);
   const smtpSecure =
@@ -36,14 +80,7 @@ async function sendDateMail(payload) {
     from: process.env.SMTP_USER,
     to: process.env.TO_EMAIL,
     subject: `New date response from ${payload.name}`,
-    html: `
-      <h2>New date response</h2>
-      <p><strong>Name:</strong> ${payload.name}</p>
-      <p><strong>Answer:</strong> ${payload.answer}</p>
-      <p><strong>Date:</strong> ${payload.date}</p>
-      <p><strong>Time:</strong> ${payload.time}</p>
-      <p><strong>Dream vibe:</strong> ${payload.vibe}</p>
-    `,
+    html: buildMailHtml(payload),
   };
 
   try {
@@ -128,11 +165,32 @@ app.post('/api/submit-date', async (req, res) => {
       process.env.SMTP_PASS &&
       process.env.TO_EMAIL;
 
+    const mailProvider = (process.env.MAIL_PROVIDER || 'smtp').toLowerCase();
+    const canUseResend = hasResendConfig();
+
+    if (mailProvider === 'resend' && canUseResend) {
+      try {
+        await sendDateMailViaResend(payload);
+
+        saveResponseLocally({ ...payload, emailSent: true, provider: 'resend' });
+
+        return res.json({
+          success: true,
+          message: 'Your response has been sent successfully via Resend.',
+          emailSent: true,
+        });
+      } catch (mailError) {
+        console.error('Resend send failed, storing locally instead:', mailError);
+      }
+    } else if (mailProvider === 'resend' && !canUseResend) {
+      console.warn('Resend is selected but required environment variables are missing.');
+    }
+
     if (hasSmtpConfig) {
       try {
         await sendDateMail(payload);
 
-        saveResponseLocally({ ...payload, emailSent: true });
+        saveResponseLocally({ ...payload, emailSent: true, provider: 'smtp' });
 
         return res.json({
           success: true,
@@ -146,7 +204,7 @@ app.post('/api/submit-date', async (req, res) => {
       console.warn('SMTP settings missing; saving response locally instead.');
     }
 
-    saveResponseLocally({ ...payload, emailSent: false });
+    saveResponseLocally({ ...payload, emailSent: false, provider: 'local-fallback' });
 
     return res.json({
       success: true,
