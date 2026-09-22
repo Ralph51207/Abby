@@ -91,6 +91,12 @@ body {
   letter-spacing: 0.04em;
 }
 
+.progress { display: flex; align-items: center; gap: 7px; margin: 0 4px 16px; color: rgba(255,255,255,.54); font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.progress-step { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+.progress-step.active { color: #fff0f8; }
+.progress-step.active b { color: var(--pink-soft); }
+.progress-line { height: 1px; flex: 1; background: rgba(255,255,255,.2); }
+
 .question-card,
 .date-card,
 .success-card {
@@ -101,7 +107,10 @@ body {
   padding: 26px 24px 20px;
   box-shadow: 0 24px 60px var(--shadow);
   backdrop-filter: blur(18px);
+  animation: cardEnter .45s ease both;
 }
+
+@keyframes cardEnter { from { opacity: 0; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
 .tag {
   display: inline-block;
@@ -171,6 +180,9 @@ h1 {
 .btn:hover {
   transform: translateY(-2px);
 }
+
+.btn:active { transform: translateY(1px) scale(.98); }
+.btn:disabled { cursor: wait; opacity: .72; }
 
 .btn-primary {
   background: linear-gradient(135deg, var(--pink), #ff7fb4);
@@ -276,6 +288,12 @@ textarea {
   margin-top: 10px;
 }
 
+.quick-vibes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.vibe-chip { border: 1px solid rgba(255,255,255,.16); border-radius: 999px; padding: 8px 10px; background: rgba(255,255,255,.07); color: rgba(255,255,255,.88); cursor: pointer; font: inherit; font-size: .76rem; transition: background .2s ease, transform .2s ease, border-color .2s ease; }
+.vibe-chip:hover, .vibe-chip.selected { background: rgba(255,93,177,.22); border-color: rgba(255,193,225,.62); transform: translateY(-1px); }
+.plan-preview { display: flex; align-items: flex-start; gap: 9px; margin-top: 15px; padding: 12px; border-radius: 14px; background: rgba(121,243,212,.09); border: 1px solid rgba(121,243,212,.2); color: rgba(255,255,255,.88); font-size: .86rem; line-height: 1.45; }
+.preview-icon { color: var(--mint); font-size: 1.25rem; line-height: 1; }
+
 .full-width {
   width: 100%;
   margin-top: 18px;
@@ -321,6 +339,8 @@ textarea {
   line-height: 1.6;
   margin-bottom: 0;
 }
+
+.text-button { margin-top: 16px; border: 0; background: transparent; color: var(--pink-soft); font: inherit; font-size: .85rem; font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
 
 .toast {
   position: fixed;
@@ -384,4 +404,10 @@ textarea {
   #noBtn {
     width: 40%;
   }
+
+  .progress b { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
